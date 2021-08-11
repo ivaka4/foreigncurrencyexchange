@@ -1,0 +1,148 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+<head>
+    <head th:replace="common/header :: head"></head>
+</head>
+
+
+<body>
+<div th:replace="common/header :: top-navigation">...</div>
+
+
+
+<div class="container">
+    <form method="#" th:action="@{/data}">
+        <label>Load currency rates from date:
+            <input type="date" name="date" id="date" max="2021-01-01">
+        </label>
+        <p>
+            <button id="btnSubmit">Submit</button>
+        </p>
+    </form>
+</div>
+<div class="container ">
+    <!-- Table structure here -->
+    <table class="table table-dark" id="our-table" th:object="${loadedData}">
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th>Source Currency</th>
+            <th>Target currency</th>
+            <th>Currency rate</th>
+        </tr>
+        </thead>
+        <tbody id="table-body">
+
+        </tbody>
+    </table>
+</div>
+
+<div class="container">
+    <div id="pagination-wrapper"></div>
+</div>
+
+<div th:replace="common/footer :: footer">...</div>
+<script th:inline="javascript">
+    let tableData = [[${loadedData}]]
+
+    var state = {
+        'querySet': tableData,
+
+        'page': 1,
+        'rows': 5,
+        'window': 5,
+    }
+
+
+    function pagination(querySet, page, rows) {
+
+        var trimStart = (page - 1) * rows
+        var trimEnd = trimStart + rows
+
+        var trimmedData = querySet.slice(trimStart, trimEnd)
+
+        var pages = Math.round(querySet.length / rows);
+
+        return {
+            'querySet': trimmedData,
+            'pages': pages,
+        }
+    }
+
+    function pageButtons(pages) {
+        var wrapper = document.getElementById('pagination-wrapper')
+        console.log(wrapper)
+
+        wrapper.innerHTML = ``
+        console.log('Pages:', pages)
+
+        var maxLeft = (state.page - Math.floor(state.window / 2))
+        var maxRight = (state.page + Math.floor(state.window / 2))
+
+        if (maxLeft < 1) {
+            maxLeft = 1
+            maxRight = state.window
+        }
+
+        if (maxRight > pages) {
+            maxLeft = pages - (state.window - 1)
+
+            if (maxLeft < 1) {
+                maxLeft = 1
+            }
+            maxRight = pages
+        }
+
+
+        for (var page = maxLeft; page <= maxRight; page++) {
+            wrapper.innerHTML += `<button value=${page} class="page btn btn-sm btn-info">${page}</button>`
+        }
+
+        if (state.page != 1) {
+            wrapper.innerHTML = `<button value=${1} class="page btn btn-sm btn-info">&#171; First</button>` + wrapper.innerHTML
+        }
+
+        if (state.page != pages) {
+            wrapper.innerHTML += `<button value=${pages} class="page btn btn-sm btn-info">Last &#187;</button>`
+        }
+
+        $('.page').on('click', function () {
+            $('#table-body').empty()
+
+            state.page = Number($(this).val())
+
+            buildTable()
+        })
+
+    }
+
+
+    function buildTable() {
+        var table = $('#table-body')
+        console.log(table)
+
+        var data = pagination(state.querySet, state.page, state.rows)
+        console.log(data)
+        var myList = data.querySet
+
+        for (var i = 1 in myList) {
+            //Keep in mind we are using "Template Litterals to create rows"
+            var row = `<tr>
+                  <td>${myList[i].date}</td>
+                  <td>${myList[i].sourceCurrency}</td>
+                  <td>${myList[i].currentTarget}</td>
+                  <td>${myList[i].currencyRate}</td>
+                  `
+            table.append(row)
+        }
+
+         pageButtons(data.pages)
+    }
+
+</script>
+<!--<script type="text/javascript" th:src="@{/js/pagination.js}"></script>-->
+</body>
+</html>
